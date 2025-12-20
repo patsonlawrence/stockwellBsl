@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -53,7 +53,7 @@ export default function LoginPage() {
   );
 }
 
-const styles = {
+const styles: Record<string, CSSProperties> = {
   container: {    
     height: "100%",                  // full body height
     width: "100%",                   // full width
