@@ -1,19 +1,14 @@
+import './globals.css';
+
 export const metadata = {
-  title: "Stockwell BSL",
-  description: "PWA Login App",
+  title: 'BSL Investment Club',
+  description: 'Investment club management system',
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" style={{ height: "100%" }}>
-      <body
-        style={{
-          margin: 0,
-          padding: 0,
-          height: "100%",
-          overflow: "hidden", // prevent scrollbars
-        }}
-      >
+    <html lang="en">
+      <body className="min-h-screen min-w-screen m-0 p-0 bg-gray-100">
         {children}
       </body>
     </html>

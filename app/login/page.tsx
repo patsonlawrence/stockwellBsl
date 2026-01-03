@@ -1,23 +1,27 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+//import { auth } from "../firebase";
+import { useRouter } from "next/navigation";
+import { auth } from "../../firebase";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setMessage("");
 
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await res.json();
-    setMessage(data.message);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push("/dashboard"); // ✅ redirect
+    } catch (error: any) {
+      setMessage("Invalid email or password");
+    }
   }
 
   return (

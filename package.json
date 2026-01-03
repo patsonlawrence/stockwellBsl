@@ -4,20 +4,30 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "next start --webpack"
   },
   "dependencies": {
-    "next": "^14.2.0",
+    "@heroicons/react": "^2.2.0",
+    "chart.js": "^4.5.1",
+    "firebase": "^12.7.0",
+    "firebase-admin": "^13.6.0",
+    "lucide-react": "^0.562.0",
+    "next": "^16.1.1",
     "next-pwa": "^5.6.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^18.2.0",
+    "recharts": "^3.6.0"
   },
   "devDependencies": {
     "@types/node": "25.0.3",
     "@types/react": "^18.2.0",
+    "@types/recharts": "^1.8.29",
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
     "typescript": "5.9.3"
   },
   "engines": {
