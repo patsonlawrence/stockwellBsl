@@ -1,31 +1,25 @@
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb } from "../../../firebaseAdmin";
+import { adminAuth, adminDb } from "../../../firebaseAdmin"; // no serviceAccount import needed
 
 export async function POST(req: Request) {
   try {
     const member = await req.json();
 
-    // 1. Create Auth user
     const user = await adminAuth.createUser({
       email: member.email,
       displayName: member.fullName,
     });
 
-    // 2. Save member in Firestore
     await adminDb.collection("members").add({
       ...member,
       uid: user.uid,
       createdAt: new Date(),
     });
 
-    // 3. Send password setup email
     await adminAuth.generatePasswordResetLink(member.email);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    return NextResponse.json(
-      { message: error.message },
-      { status: 400 }
-    );
+    return NextResponse.json({ message: error.message }, { status: 400 });
   }
 }
