@@ -5,13 +5,13 @@ const isProd = process.env.NODE_ENV === "production";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  //turbopack: {},
 };
 
-export default withPWA({
-  ...nextConfig,
+const pwaConfig = {
   dest: "public",
   register: true,
   skipWaiting: true,
   disable: !isProd,
-});
+};
+
+export default withPWA(pwaConfig)(nextConfig);

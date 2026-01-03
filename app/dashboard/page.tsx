@@ -51,7 +51,7 @@ export default function DashboardPage() {
 }
 
 // Navigation component
-export function NavigationSection() {
+function NavigationSection() {
   const router = useRouter();
 
   const navItems = [
