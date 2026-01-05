@@ -14,6 +14,8 @@ import {
 } from "firebase/firestore";
 import { db } from "../../../firebase";
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
+import { useRouter } from "next/navigation";
+
 
 
 function generateMembershipId() {
@@ -22,6 +24,7 @@ function generateMembershipId() {
 }
 
 export default function MemberPage() {
+  
   const [member, setMember] = useState({
     fullName: "",
     email: "",
@@ -122,8 +125,6 @@ try {
   return;
 }
 
-
-
 const data = await res.json();
 alert("Member added. Password setup email sent.");
 
@@ -169,11 +170,18 @@ const handleResetPassword = async (email: string) => {
     alert(error.message);
   }
 };
+ const router = useRouter();
+
+  const handleExit = () => {
+  localStorage.removeItem("authToken");
+  router.push("/dashboard");
+};
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
         <h1 style={styles.title}>{editingId ? "Edit Member" : "Add New Member"}</h1>
+        
         <form onSubmit={handleSubmit} style={styles.form}>
           <h2 style={styles.sectionTitle}>Personal Info</h2>
           <input type="text" name="fullName" placeholder="Full Name" value={member.fullName} onChange={handleChange} style={styles.input} required />
@@ -221,6 +229,7 @@ const handleResetPassword = async (email: string) => {
                 });
               }}
             >Reset</button>
+            <button style={styles.exitButton} onClick={handleExit}>Exit </button>
           </div>
         </form>
 
@@ -234,7 +243,8 @@ const handleResetPassword = async (email: string) => {
                   Initial: ${m.initialContribution}, Ongoing: ${m.ongoingContribution}, Shares: {m.sharesOwned}
                 </div>
                 <div style={styles.memberActions}>
-  <button style={styles.editButton} onClick={() => handleEdit(m)}>
+  <button style={styles.editButton} 
+    onClick={() => handleEdit(m)}>
     Edit
   </button>
 
@@ -250,7 +260,8 @@ const handleResetPassword = async (email: string) => {
     onClick={() => handleDelete(m.id, m.fullName)}
   >
     Delete
-  </button>
+  </button>  
+  
 </div>
 
               </div>
@@ -278,5 +289,6 @@ const styles: Record<string, CSSProperties> = {
   memberActions: { display: "flex", gap: "0.5rem" },
   editButton: { padding: "4px 8px", backgroundColor: "#ffd700", border: "none", borderRadius: "4px", cursor: "pointer" },
   deleteButton: { padding: "4px 8px", backgroundColor: "#ff4d4f", color: "#fff", border: "none", borderRadius: "4px", cursor: "pointer" },
+  exitButton: { padding: "10px 16px", fontSize: "1rem", fontWeight: "bold", backgroundColor: "#f0ba65", border: "none", borderRadius: "6px", cursor: "pointer", minWidth: "100px", },
   error: { color: "red", fontSize: "0.85rem", marginBottom: "0.5rem" },
 };
