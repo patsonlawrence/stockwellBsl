@@ -12,14 +12,17 @@ export async function POST(req: Request) {
     });
 
     // 2. Save member in Firestore
-    await adminDb.collection("members").add({
-      ...member,
-      uid: user.uid,
-      createdAt: new Date(),
-    });
+    await adminDb.collection("members").doc(user.uid).set({
+  ...member,
+  uid: user.uid,
+  createdAt: new Date(),
+});
+
 
     // 3. Send password setup email
-    await adminAuth.generatePasswordResetLink(member.email);
+    const link = await adminAuth.generatePasswordResetLink(member.email);
+console.log("PASSWORD LINK:", link);
+
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
