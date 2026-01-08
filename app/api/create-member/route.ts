@@ -1,31 +1,32 @@
-import { NextResponse } from "next/server";
+// /app/api/create-member/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "../../../firebaseAdmin";
 
-export async function POST(req: Request) {
+export const runtime = "nodejs";
+
+export async function POST(req: NextRequest) {
   try {
     const member = await req.json();
-    
-    // 1. Create Auth user
+
+    // Create user in Firebase Auth
     const user = await adminAuth.createUser({
       email: member.email,
       displayName: member.fullName,
     });
 
-    // 2. Save member in Firestore
+    // Add member to Firestore
     await adminDb.collection("members").add({
       ...member,
       uid: user.uid,
       createdAt: new Date(),
     });
 
-    // 3. Send password setup email
+    // Send password reset link
     await adminAuth.generatePasswordResetLink(member.email);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    return NextResponse.json(
-      { message: error.message },
-      { status: 400 }
-    );
+    console.error("Error creating member:", error.message);
+    return NextResponse.json({ message: error.message }, { status: 400 });
   }
 }
