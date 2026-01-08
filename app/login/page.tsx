@@ -4,7 +4,7 @@ import { useState, type CSSProperties } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 //import { auth } from "../firebase";
 import { useRouter } from "next/navigation";
-import { auth } from "../../firebase";
+import { auth } from "@/firebase";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
