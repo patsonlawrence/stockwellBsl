@@ -1,11 +1,13 @@
 // /app/api/create-member/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { adminAuth, adminDb } from "../../../firebaseAdmin";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
+    // ✅ Dynamic import (this is the critical fix)
+    const { adminAuth, adminDb } = await import("../../../firebaseAdmin");
+
     const member = await req.json();
 
     // Create user in Firebase Auth
@@ -26,7 +28,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("Error creating member:", error.message);
-    return NextResponse.json({ message: error.message }, { status: 400 });
+    console.error("Error creating member:", error);
+    return NextResponse.json(
+      { message: error.message },
+      { status: 400 }
+    );
   }
 }
