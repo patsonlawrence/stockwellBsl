@@ -25,11 +25,12 @@ interface Member {
   [key: string]: any;
 }
 
-interface Props {
-  params: { uid: string };
-}
 
-export default async function MemberProfilePage({ params }: Props) {
+export default async function MemberProfilePage({ 
+  params,
+}: {
+  params: { uid: string };
+}) {
   const { uid } = params;
 
   try {
