@@ -1,34 +1,34 @@
-// /app/api/create-member/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { adminAuth, adminDb } from "../../../firebaseAdmin";
 
-export const runtime = "nodejs";
-
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    // ✅ Dynamic import (this is the critical fix)
-    const { adminAuth, adminDb } = await import("../../../firebaseAdmin");
-
     const member = await req.json();
-
-    // Create user in Firebase Auth
+    
+    // 1. Create Auth user
     const user = await adminAuth.createUser({
       email: member.email,
       displayName: member.fullName,
     });
 
-    // Add member to Firestore
-    await adminDb.collection("members").add({
-      ...member,
-      uid: user.uid,
-      createdAt: new Date(),
-    });
+    // 2. Save member in Firestore
+    await adminDb.collection("members").doc(user.uid).set({
+  ...member,
+  uid: user.uid,
+  createdAt: new Date(),
+});
 
-    // Send password reset link
-    await adminAuth.generatePasswordResetLink(member.email);
 
-    return NextResponse.json({ success: true });
+    /* 3. Send password setup email
+    const link = await adminAuth.generatePasswordResetLink(member.email);
+console.log("PASSWORD LINK:", link);*/
+
+
+    return NextResponse.json(
+      { success: true, uid: user.uid },
+      { status: 200 }
+    );
   } catch (error: any) {
-    console.error("Error creating member:", error);
     return NextResponse.json(
       { message: error.message },
       { status: 400 }

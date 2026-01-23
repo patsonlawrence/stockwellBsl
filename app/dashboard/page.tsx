@@ -1,16 +1,38 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
+import { useRouter } from "next/navigation";
+
 import StatCard from "../../components/StatCard";
 import RecentInvestments from "../../components/RecentInvestments";
 import TopContributors from "../../components/TopContributors";
-import { useRouter } from "next/navigation";
+
+type Stats = {
+  membersCount: number;
+  totalFund: number;
+  monthlyContributions: number;
+  annualGrowth: string;
+};
 
 export default function DashboardPage() {
   const router = useRouter();
+  const [stats, setStats] = useState<Stats>({
+    membersCount: 0,
+    totalFund: 0,
+    monthlyContributions: 0,
+    annualGrowth: "0%",
+  });
+
+  useEffect(() => {
+    fetch("/api/statistics")
+      .then((res) => res.json())
+      .then((data) => setStats(data))
+      .catch((err) => console.error(err));
+  }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken"); // adjust key if different
+    localStorage.removeItem("authToken");
     router.push("/login");
   };
 
@@ -26,12 +48,13 @@ export default function DashboardPage() {
       </header>
 
       {/* Stats */}
-      <section style={styles.statsGrid}>
-        <StatCard title="Total Fund Value" value="Ush125,000" />
-        <StatCard title="Members" value="24" />
-        <StatCard title="Monthly Contributions" value="Ush5,200" />
-        <StatCard title="Annual Growth" value="+12.4%" highlight />
-      </section>
+<section style={styles.statsGrid}>        
+  <StatCard title="Total Fund Value"  value={stats ? `Ush: ${stats.totalFund.toLocaleString()}` : "Loading..."} />
+  <StatCard title="Members"  value={stats ? stats.membersCount.toString() : "Loading..."} />
+  <StatCard title="Monthly Contributions"  value={stats ? `Ush: ${stats.monthlyContributions.toLocaleString()}` : "Loading..."} />
+  <StatCard title="Annual Growth"  value={stats ? stats.annualGrowth : "Loading..."} highlight />
+</section>
+
 
       {/* Bottom Sections */}
       <section style={styles.bottomGrid}>
@@ -39,10 +62,10 @@ export default function DashboardPage() {
         <TopContributors />
       </section>
 
-      {/* Navigation Buttons */}
+      {/* Navigation */}
       <NavigationSection />
 
-      {/* Logout Button */}
+      {/* Logout */}
       <button style={styles.logoutButton} onClick={handleLogout}>
         Logout
       </button>
@@ -53,18 +76,19 @@ export default function DashboardPage() {
 // Navigation component
 function NavigationSection() {
   const router = useRouter();
-
   const navItems = [
-    { label: "Profile", link: "/profile" },
-    { label: "Members", link: "/dashboard/members" }, // ✅ members page
-    { label: "Loans", link: "/loans" },
-    { label: "Investments", link: "/investments" },
-    { label: "Dividends", link: "/dividends" },
-    { label: "Income", link: "/income" },
-    { label: "Expenditures", link: "/expenditures" },
-    { label: "Logo", link: "/" },
-    { label: "Savings", link: "/savings" },
-    { label: "Shares", link: "/shares" },
+    { label: "Profile", link: "/dashboard/profile" },
+    { label: "Members", link: "/dashboard/members" },
+    { label: "Loans", link: "/dashboard/loans" },
+    { label: "Investments", link: "/dashboard/investments" },
+    { label: "Dividends", link: "/dashboard/dividends" },
+    { label: "Income", link: "/dashboard/income" },
+    { label: "OutFlows", link: "/dashboard/outflows" },
+    { label: "Logo", link: "/dashboard" },
+    { label: "Savings", link: "/dashboard/savings" },
+    { label: "Shares", link: "/dashboard/shares" },
+    { label: "Admin", link: "/dashboard/admin/approvals" },
+    { label: "Bsl💵", link: "/dashboard/subscribe" },  
   ];
 
   return (
@@ -82,7 +106,7 @@ function NavigationSection() {
   );
 }
 
-// Styles
+// Styles (unchanged)
 const styles: Record<string, CSSProperties> = {
   container: {
     minHeight: "100vh",
@@ -148,8 +172,8 @@ const styles: Record<string, CSSProperties> = {
     transition: "all 0.2s ease",
   },
   logoutButton: {
-    backgroundColor: "red",
-    color: "white",
+    backgroundColor: "white",
+    color: "red",
     border: "none",
     padding: "0.5rem 1rem",
     borderRadius: "5px",
