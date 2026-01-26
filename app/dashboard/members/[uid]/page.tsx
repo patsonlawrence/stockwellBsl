@@ -26,12 +26,13 @@ interface Member {
 }
 
 
-export default async function MemberProfilePage({ 
+export default async function MemberProfilePage({
   params,
 }: {
-  params: { uid: string };
+  params: Promise<{ uid: string }>;
 }) {
-  const { uid } = params;
+  const { uid } = await params;
+
 
   try {
     const docRef = adminDb.collection("members").doc(uid);
