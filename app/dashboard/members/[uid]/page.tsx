@@ -1,7 +1,9 @@
-// app/members/[uid]/page.tsx
+// app/dashboard/members/[uid]/page.tsx
 import { adminDb } from "../../../../firebaseAdmin"; // your admin Firestore
 import { notFound } from "next/navigation";
-import ResetPasswordButton from "./ResetPasswordButton"; // client component
+import ResetPasswordButtonWrapper from "../../../../components/ResetPasswordButtonWrapper";
+// inside render
+
 
 interface Member {
   uid: string;
@@ -91,7 +93,7 @@ export default async function MemberProfilePage({
           <p><strong>Relation:</strong> {member.NextOfKinRelation}</p>
         </div>
 
-        <ResetPasswordButton email={member.email} />
+        <ResetPasswordButtonWrapper email={member.email} />
       </div>
     );
   } catch (error: any) {
