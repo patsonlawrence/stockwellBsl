@@ -1,7 +1,7 @@
 // components/ResetPasswordButtonWrapper.tsx
 "use client";
 
-import ResetPasswordButton from "../app/dashboard/members/[uid]/ResetPasswordButton";
+import ResetPasswordButton from "@/components/ResetPasswordButton";
 
 type Props = { email: string };
 
