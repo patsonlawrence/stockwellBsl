@@ -49,10 +49,10 @@ export default function DashboardPage() {
 
       {/* Stats */}
 <section style={styles.statsGrid}>        
-  <StatCard title="Total Fund Value"  value={stats ? `Ush: ${stats.totalFund.toLocaleString()}` : "Loading..."} />
-  <StatCard title="Members"  value={stats ? stats.membersCount.toString() : "Loading..."} />
-  <StatCard title="Monthly Contributions"  value={stats ? `Ush: ${stats.monthlyContributions.toLocaleString()}` : "Loading..."} />
-  <StatCard title="Annual Growth"  value={stats ? stats.annualGrowth : "Loading..."} highlight />
+  <StatCard title="Total Fund Value"  value={stats ?.totalFund != null? `Ush: ${stats.totalFund.toLocaleString()}` : "Loading..."} />
+  <StatCard title="Members"  value={stats ?.membersCount != null? stats.membersCount.toString() : "Loading..."} />
+  <StatCard title="Monthly Contributions"  value={stats ?.monthlyContributions != null? `Ush: ${stats.monthlyContributions.toLocaleString()}` : "Loading..."} />
+  <StatCard title="Annual Growth"  value={stats ?.annualGrowth != null? stats.annualGrowth : "Loading..."} highlight />
 </section>
 
 
