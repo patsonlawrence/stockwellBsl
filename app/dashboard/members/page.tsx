@@ -14,7 +14,7 @@ import {
   serverTimestamp,
   getDoc,
 } from "firebase/firestore";
-import { db } from "../../../firebase";
+import { db } from "@/firebaseClient";
 
 import { useRouter } from "next/navigation";
 

@@ -14,7 +14,7 @@ import {
   orderBy
 } from "firebase/firestore";
 import { getAuth, User } from "firebase/auth";
-import { db } from "../../../firebase";
+import { db } from "@/firebaseClient";
 
 // --------------------
 // Types

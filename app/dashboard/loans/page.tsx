@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties, FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import {
@@ -11,20 +12,101 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
-import { useRouter } from "next/navigation"; // Next.js router for navigation
-import app, { db } from "../../../firebaseClient";
+import { useRouter } from "next/navigation";
+import app, { db } from "@/firebaseClient";
+
+/* =======================
+   Styles
+======================= */
+
+const styles: Record<string, CSSProperties> = {
+  page: {
+    maxWidth: 800,
+    margin: "2rem auto",
+    padding: "0 1rem",
+    background: "linear-gradient(135deg, #74b9ff, #a29bfe)", // lighter blue gradient
+    minHeight: "100vh",
+    borderRadius: "12px",
+    paddingBottom: "2rem",
+  },
+  headerRow: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    marginBottom: "2rem",
+    gap: "1rem",
+  },
+  title: { color: "#1e3c72" },
+  exitButton: {
+    padding: "0.5rem 1rem",
+    borderRadius: "8px",
+    border: "none",
+    background: "#ef4444",
+    color: "#fff",
+    fontWeight: "bold",
+    cursor: "pointer",
+  },
+  loanCard: {
+    background: "#fff",
+    padding: "1rem",
+    borderRadius: "12px",
+    marginBottom: "1rem",
+    boxShadow: "0 6px 15px rgba(0,0,0,0.08)",
+  },
+  approvedLoanCard: {
+    background: "#e0e0e0", // grayed out for approved loans
+    padding: "1rem",
+    borderRadius: "12px",
+    marginBottom: "1rem",
+    boxShadow: "0 6px 15px rgba(0,0,0,0.08)",
+    opacity: 0.8,
+  },
+  emptyText: {
+    color: "#9ca3af",
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.75rem",
+    maxWidth: 400,
+  },
+  input: {
+    padding: "0.5rem",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+  },
+  submitButton: {
+    padding: "0.5rem 1rem",
+    borderRadius: "8px",
+    border: "none",
+    background: "#2563eb",
+    color: "#fff",
+    fontWeight: "bold",
+    cursor: "pointer",
+  },
+};
+
+/* =======================
+   Types
+======================= */
 
 interface Loan {
   id: string;
   amount: number;
   purpose: string;
-  status: string;
+  status: "pending" | "approved" | "rejected";
   interestRate: number;
   durationMonths: number;
   monthlyPayment: number;
-  startDate?: Timestamp;
+  finalExpectedPayment: number;
   createdAt?: Timestamp;
 }
+
+/* =======================
+   Component
+======================= */
 
 export default function LoansPage() {
   const router = useRouter();
@@ -34,7 +116,7 @@ export default function LoansPage() {
   const [error, setError] = useState("");
   const [userUid, setUserUid] = useState<string | null>(null);
 
-  // Form state
+  // form state
   const [amount, setAmount] = useState("");
   const [purpose, setPurpose] = useState("");
   const [duration, setDuration] = useState("");
@@ -42,11 +124,14 @@ export default function LoansPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formStatus, setFormStatus] = useState("");
 
-  // Fetch loans
+  /* =======================
+     Fetch Loans
+  ======================= */
+
   useEffect(() => {
     const auth = getAuth(app);
 
-    const unsub = onAuthStateChanged(auth, async (user: User | null) => {
+    return onAuthStateChanged(auth, async (user: User | null) => {
       if (!user) {
         setError("Not logged in");
         setLoading(false);
@@ -59,7 +144,7 @@ export default function LoansPage() {
         const q = query(collection(db, "loans"), where("uid", "==", user.uid));
         const snap = await getDocs(q);
 
-        const data = snap.docs.map((doc) => ({
+        const data: Loan[] = snap.docs.map((doc) => ({
           id: doc.id,
           ...(doc.data() as Omit<Loan, "id">),
         }));
@@ -71,28 +156,27 @@ export default function LoansPage() {
         setLoading(false);
       }
     });
-
-    return () => unsub();
   }, []);
 
-  // Loan application
-  const handleSubmit = async (e: React.FormEvent) => {
+  /* =======================
+     Submit Loan
+  ======================= */
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!userUid) return;
 
-    const amt = parseFloat(amount);
-    const dur = parseInt(duration);
-    const interest = parseFloat(interestRate);
+    const amt = Number(amount);
+    const dur = Number(duration);
+    const interest = Number(interestRate);
 
-    if (!amt || !dur || !interest || !purpose) {
+    if (!amt || !dur || !interest || !purpose.trim()) {
       setFormStatus("Please fill all fields correctly");
       return;
     }
 
-    const monthlyPayment = parseFloat(
-      ((amt * (1 + interest / 100)) / dur).toFixed(2)
-    );
-
+    const monthlyPayment = Number(((amt * (1 + interest / 100)) / dur).toFixed(2));
+    const finalExpectedPayment = Number((monthlyPayment * dur).toFixed(2));
     setSubmitting(true);
     setFormStatus("");
 
@@ -104,6 +188,7 @@ export default function LoansPage() {
         durationMonths: dur,
         interestRate: interest,
         monthlyPayment,
+        finalExpectedPayment,
         status: "pending",
         createdAt: serverTimestamp(),
       });
@@ -112,18 +197,17 @@ export default function LoansPage() {
         ...prev,
         {
           id: docRef.id,
-          uid: userUid,
           amount: amt,
           purpose,
           durationMonths: dur,
           interestRate: interest,
           monthlyPayment,
+          finalExpectedPayment,
           status: "pending",
           createdAt: Timestamp.now(),
         },
       ]);
 
-      // reset form
       setAmount("");
       setPurpose("");
       setDuration("");
@@ -136,53 +220,40 @@ export default function LoansPage() {
     }
   };
 
+  /* =======================
+     Sort Loans: Approved at Bottom
+  ======================= */
+  const sortedLoans = [...loans].sort((a, b) => {
+    if (a.status === "approved" && b.status !== "approved") return 1;
+    if (a.status !== "approved" && b.status === "approved") return -1;
+    return 0;
+  });
+
+  /* =======================
+     Render
+  ======================= */
+
   if (loading) return <p style={{ padding: "2rem" }}>Loading loans...</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   return (
-    <div style={{ maxWidth: 800, margin: "2rem auto", padding: "0 1rem" }}>
-      {/* Header + Exit Button */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "2rem",
-        }}
-      >
-        <h1 style={{ color: "#1e3c72" }}>My Loans</h1>
-        <button
-          onClick={() => router.push("/dashboard")}
-          style={{
-            padding: "0.5rem 1rem",
-            borderRadius: "8px",
-            border: "none",
-            background: "#ef4444",
-            color: "#fff",
-            fontWeight: "bold",
-            cursor: "pointer",
-          }}
-        >
+    <div style={styles.page}>
+      <div style={styles.headerRow}>
+        <h1 style={styles.title}>My Loans</h1>
+        <button onClick={() => router.push("/dashboard")} style={styles.exitButton}>
           Exit to Dashboard
         </button>
       </div>
 
-      {/* Loan list */}
-      {loans.length === 0 && <p>No loans found.</p>}
-      {loans.map((loan) => (
+      {sortedLoans.length === 0 && <p style={styles.emptyText}>No loans found.</p>}
+
+      {sortedLoans.map((loan) => (
         <div
           key={loan.id}
-          style={{
-            background: "#fff",
-            padding: "1rem",
-            borderRadius: "12px",
-            marginBottom: "1rem",
-            boxShadow: "0 6px 15px rgba(0,0,0,0.08)",
-            transition: "transform 0.2s",
-          }}
+          style={loan.status === "approved" ? styles.approvedLoanCard : styles.loanCard}
         >
           <p>
-            <strong>Amount:</strong> ${loan.amount.toLocaleString()}
+            <strong>Amount:</strong> Ush {loan.amount.toLocaleString()}
           </p>
           <p>
             <strong>Purpose:</strong> {loan.purpose}
@@ -209,76 +280,65 @@ export default function LoansPage() {
             <strong>Duration:</strong> {loan.durationMonths} months
           </p>
           <p>
-            <strong>Monthly Payment:</strong> ${loan.monthlyPayment}
+            <strong>Monthly Payment:</strong>{' '} Ush {Number(loan.monthlyPayment || 0).toLocaleString()}
           </p>
+          <p>
+            <strong>Final Expected Pay:</strong>{' '} Ush {Number(loan.finalExpectedPayment || 0).toLocaleString()}
+          </p>
+
         </div>
       ))}
 
       <hr style={{ margin: "2rem 0" }} />
 
-      {/* Loan application form */}
-      <h2 style={{ color: "#1e3c72", marginBottom: "1rem" }}>
-        Apply for a Loan
-      </h2>
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.75rem",
-          maxWidth: 400,
-        }}
-      >
+      <h2 style={styles.title}>Apply for a Loan</h2>
+
+      <form onSubmit={handleSubmit} style={styles.form}>
         <input
           type="number"
           placeholder="Amount"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
+          style={styles.input}
           required
-          style={{ padding: "0.5rem", borderRadius: "8px", border: "1px solid #ccc" }}
         />
         <input
           type="text"
           placeholder="Purpose"
           value={purpose}
           onChange={(e) => setPurpose(e.target.value)}
+          style={styles.input}
           required
-          style={{ padding: "0.5rem", borderRadius: "8px", border: "1px solid #ccc" }}
         />
         <input
           type="number"
           placeholder="Duration (months)"
           value={duration}
           onChange={(e) => setDuration(e.target.value)}
+          style={styles.input}
           required
-          style={{ padding: "0.5rem", borderRadius: "8px", border: "1px solid #ccc" }}
         />
         <input
           type="number"
           placeholder="Interest Rate (%)"
           value={interestRate}
           onChange={(e) => setInterestRate(e.target.value)}
+          style={styles.input}
           required
-          style={{ padding: "0.5rem", borderRadius: "8px", border: "1px solid #ccc" }}
         />
 
         <button
           type="submit"
           disabled={submitting}
           style={{
-            padding: "0.5rem 1rem",
-            borderRadius: "8px",
-            border: "none",
-            background: "#2563eb",
-            color: "#fff",
-            fontWeight: "bold",
-            cursor: "pointer",
+            ...styles.submitButton,
             opacity: submitting ? 0.6 : 1,
           }}
         >
           {submitting ? "Submitting..." : "Submit Loan Application"}
         </button>
       </form>
+
       {formStatus && <p style={{ marginTop: "0.5rem" }}>{formStatus}</p>}
     </div>
   );

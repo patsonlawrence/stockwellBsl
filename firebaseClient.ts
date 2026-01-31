@@ -1,9 +1,8 @@
-// app/firebaseClient.ts
-"use client"; // ensures this runs in the browser
+"use client";
 
-import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-import { getAuth, Auth } from "firebase/auth";
-import { getFirestore, Firestore } from "firebase/firestore";
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
@@ -14,14 +13,8 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 };
 
-// Initialize Firebase app singleton
-const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// Singleton pattern for Firestore
-let dbSingleton: Firestore;
+export const auth = getAuth(app);
+export const db = getFirestore(app);
 export default app;
-export const db = dbSingleton ?? (dbSingleton = getFirestore(app));
-
-// Singleton pattern for Auth
-let authSingleton: Auth;
-export const auth = authSingleton ?? (authSingleton = getAuth(app));

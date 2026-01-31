@@ -1,5 +1,5 @@
 // app/dashboard/members/[uid]/page.tsx
-import { adminDb } from "../../../../firebaseAdmin"; // your admin Firestore
+import { adminDb } from "@/firebaseAdmin"; // your admin Firestore
 import { notFound } from "next/navigation";
 import ResetPasswordButtonWrapper from "../../../../components/ResetPasswordButtonWrapper";
 // inside render

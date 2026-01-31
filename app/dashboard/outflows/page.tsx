@@ -11,7 +11,7 @@ import {
   arrayUnion,
   serverTimestamp,
 } from "firebase/firestore";
-import { db } from "../../../firebase";
+import { db } from "@/firebaseClient";
 import { useRouter } from "next/navigation";
 
 /* ================= TYPES ================= */

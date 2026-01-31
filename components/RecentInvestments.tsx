@@ -7,7 +7,7 @@ import {
   limit,
   query,
 } from "firebase/firestore";
-import { db } from "../firebase"; // adjust path if needed
+import { db } from "@/firebaseClient"; // adjust path if needed
 
 type Investment = {
   name: string;

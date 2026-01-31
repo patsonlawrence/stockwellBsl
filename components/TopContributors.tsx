@@ -1,6 +1,6 @@
 import { CSSProperties, useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase"; // adjust path if needed
+import { db } from "@/firebaseClient"; // adjust path if needed
 
 type Contributor = {
   name: string;

@@ -4,7 +4,7 @@ import { useEffect, useState, CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { User, onAuthStateChanged, getAuth, sendPasswordResetEmail } from "firebase/auth";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
-import app, { db } from "../../../firebaseClient";
+import app, { db } from "@/firebaseClient";
 
 interface Member {
   uid: string;

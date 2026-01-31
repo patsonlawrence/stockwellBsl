@@ -3,7 +3,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { db } from "../../../firebase";
+import { db } from "@/firebaseClient";
 
 import { doc, updateDoc } from "firebase/firestore";
 
