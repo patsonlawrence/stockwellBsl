@@ -1,18 +1,23 @@
 import { getAdminDb } from "@/firebaseAdmin";
 import { NextResponse } from "next/server";
 
+export const runtime = "nodejs"; // ✅ REQUIRED for Firebase Admin
+
 export async function GET() {
   try {
     const now = new Date();
-    const db = getAdminDb(); // Admin SDK Firestore
+    const db = getAdminDb();
 
-    // --- 1️⃣ Members count ---
-    const membersCount = await db.collection("members").count().get()
-      .then(snapshot => snapshot.data().count || 0)
-      .catch(() => 0); // fallback
+    // --- 1️⃣ Members count (FAST, no docs loaded) ---
+    const membersCountSnap = await db.collection("members").count().get();
+    const membersCount = membersCountSnap.data().count || 0;
 
-    // --- 2️⃣ Savings stats ---
-    const savingsSnapshot = await db.collection("savings").get();
+    // --- 2️⃣ Savings stats (ONLY required fields) ---
+    const savingsSnapshot = await db
+      .collection("savings")
+      .select("submittedAmount", "createdAt")
+      .get();
+
     let totalSavings = 0;
     let monthlyContributions = 0;
     let lastYearTotal = 0;
@@ -22,42 +27,47 @@ export async function GET() {
       const amount = Number(data.submittedAmount || 0);
       totalSavings += amount;
 
-      // ✅ Safely parse createdAt
-      let date: Date;
-      if (data.createdAt?.toDate) {
-        date = data.createdAt.toDate();
-      } else if (data.createdAt?.seconds) {
-        date = new Date(data.createdAt.seconds * 1000);
-      } else {
-        date = now; // fallback
-      }
+      const date =
+        data.createdAt?.toDate?.() ??
+        (data.createdAt?.seconds
+          ? new Date(data.createdAt.seconds * 1000)
+          : null);
 
-      if (date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()) {
+      if (!date) return;
+
+      if (
+        date.getMonth() === now.getMonth() &&
+        date.getFullYear() === now.getFullYear()
+      ) {
         monthlyContributions += amount;
       }
+
       if (date.getFullYear() === now.getFullYear() - 1) {
         lastYearTotal += amount;
       }
     });
 
-    // --- 3️⃣ Total profits (resolved investments) ---
-    const investmentsSnapshot = await db.collection("investments").get();
-    let totalProfits = 0;
+    // --- 3️⃣ Total profits (resolved only) ---
+    const investmentsSnapshot = await db
+      .collection("investments")
+      .where("status", "==", "resolved")
+      .select("profitEarned")
+      .get();
 
+    let totalProfits = 0;
     investmentsSnapshot.forEach((doc) => {
-      const data = doc.data();
-      if (data?.status === "resolved") {
-        totalProfits += Number(data.profitEarned || 0);
-      }
+      totalProfits += Number(doc.data().profitEarned || 0);
     });
 
-    // --- 4️⃣ Total expenditures ---
-    const expendituresSnapshot = await db.collection("expenditures").get();
-    let totalExpenditures = 0;
+    // --- 4️⃣ Total expenditures (amount only) ---
+    const expendituresSnapshot = await db
+      .collection("expenditures")
+      .select("amount")
+      .get();
 
+    let totalExpenditures = 0;
     expendituresSnapshot.forEach((doc) => {
-      const data = doc.data();
-      totalExpenditures += Number(data?.amount || 0);
+      totalExpenditures += Number(doc.data().amount || 0);
     });
 
     // --- 5️⃣ Total fund value ---
@@ -77,9 +87,9 @@ export async function GET() {
     });
 
   } catch (error: any) {
-    console.error("API Error:", error);
+    console.error("STATISTICS API ERROR:", error);
     return NextResponse.json(
-      { error: error.message || "Unable to fetch stats" },
+      { error: "Unable to fetch statistics" },
       { status: 500 }
     );
   }
