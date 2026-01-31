@@ -215,9 +215,8 @@ export default function SavingsPage() {
 
         <textarea
           style={styles.textarea}
-          placeholder="Notes (optional)"
-          value={newSaving.notes}
-          onChange={e => setNewSaving({ ...newSaving, notes: e.target.value })}
+          defaultValue={newSaving.notes}
+          onBlur={(e) => setNewSaving({ ...newSaving, notes: e.target.value })}
         />
 
         <input

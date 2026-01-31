@@ -1,10 +1,8 @@
 // app/dashboard/members/[uid]/page.tsx
-import { adminDb } from "@/firebaseAdmin"; // your admin Firestore
+import { getAdminDb } from "@/firebaseAdmin"; // your admin Firestore
 import { notFound } from "next/navigation";
 import ResetPasswordButtonWrapper from "../../../../components/ResetPasswordButtonWrapper";
 // inside render
-
-
 interface Member {
   uid: string;
   fullName: string;
@@ -33,19 +31,20 @@ export default async function MemberProfilePage({
 }: {
   params: Promise<{ uid: string }>;
 }) {
-  const { uid } = await params;
-
-
+  const { uid } = await params;  
   try {
+    const adminDb = getAdminDb();
     const docRef = adminDb.collection("members").doc(uid);
     const docSnap = await docRef.get();
 
     if (!docSnap.exists) return notFound();
 
     const member = docSnap.data() as Member;
+    if (!member) return notFound();
 
-    // Convert Firestore Timestamp to JS Date
-    const createdAt = new Date(member.createdAt.seconds * 1000);
+    const createdAt = member.createdAt
+      ? new Date(member.createdAt.seconds * 1000)
+      : new Date();
 
     return (
       <div

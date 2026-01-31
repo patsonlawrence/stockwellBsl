@@ -52,7 +52,7 @@ export default function RecentInvestments() {
 
   return (
     <div style={styles.card}>
-      <h2 style={styles.heading}>📈 Recent Investments</h2>
+      <h2 style={styles.heading}>📈 Recent Savings</h2>
 
       {loading ? (
         <p>Loading...</p>

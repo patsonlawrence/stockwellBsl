@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/firebaseAdmin";
+import { getAdminAuth, getAdminDb } from "@/firebaseAdmin";
 
 export async function POST(req: Request) {
   try {
+    const adminAuth = getAdminAuth();
+    const adminDb = getAdminDb();
+
     const member = await req.json();
 
     if (!member.email || !member.fullName) {
@@ -24,9 +27,6 @@ export async function POST(req: Request) {
       uid: user.uid,
       createdAt: new Date(),
     });
-
-    // Optional: password setup link
-    // const link = await adminAuth.generatePasswordResetLink(member.email);
 
     return NextResponse.json(
       { success: true, uid: user.uid },

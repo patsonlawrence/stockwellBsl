@@ -1,6 +1,13 @@
+import "server-only";
 import admin from "firebase-admin";
 
-if (!admin.apps.length) {
+let app: admin.app.App | null = null;
+
+function getApp() {
+  if (app) return app;
+    try {
+    app = admin.app(); // ✅ get existing app if it exists
+  } catch (error) {
   if (
     !process.env.FIREBASE_PROJECT_ID ||
     !process.env.FIREBASE_CLIENT_EMAIL ||
@@ -9,14 +16,24 @@ if (!admin.apps.length) {
     throw new Error("Missing Firebase Admin environment variables");
   }
 
-  admin.initializeApp({
+  app = admin.initializeApp({
     credential: admin.credential.cert({
-      project_id: process.env.FIREBASE_PROJECT_ID,
-      client_email: process.env.FIREBASE_CLIENT_EMAIL,
-      private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-    } as admin.ServiceAccount),
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+    }),
   });
+  }
+  return app;
+  
 }
 
-export const adminAuth = admin.auth();
-export const adminDb = admin.firestore();
+export function getAdminAuth() {
+  getApp();
+  return admin.auth();
+}
+
+export function getAdminDb() {
+  getApp();
+  return admin.firestore();
+}
