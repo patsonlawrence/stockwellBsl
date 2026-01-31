@@ -1,17 +1,24 @@
+// app/api/statistics/route.ts
 import { getAdminDb } from "@/firebaseAdmin";
 import { NextResponse } from "next/server";
+
+// ✅ Force Node.js runtime so Admin SDK works on Vercel
+export const runtime = "nodejs";
 
 export async function GET() {
   try {
     const now = new Date();
     const db = getAdminDb(); // Admin SDK Firestore
 
-    // 1️⃣ Members count
-    const membersSnapshot = await db.collection("members").get();
-    const membersCount = membersSnapshot.size;
+    // 1️⃣ Members count using count()
+    const membersCol = db.collection("members");
+    const membersCountSnapshot = await membersCol.get();
+    const membersCount = membersCountSnapshot.size;
 
-    // 2️⃣ Savings: total, monthly contributions, and last year total
-    const savingsSnapshot = await db.collection("savings").get();
+    // 2️⃣ Savings totals
+    const savingsCol = db.collection("savings");
+    const savingsSnapshot = await savingsCol.get();
+
     let totalSavings = 0;
     let monthlyContributions = 0;
     let lastYearTotal = 0;
@@ -21,6 +28,7 @@ export async function GET() {
       const amount = Number(data.submittedAmount || 0);
       totalSavings += amount;
 
+      // Convert Firestore Timestamp safely
       const date = data.createdAt?.toDate?.() || new Date();
       if (date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()) {
         monthlyContributions += amount;
@@ -31,16 +39,22 @@ export async function GET() {
     });
 
     // 3️⃣ TOTAL PROFITS (resolved investments)
-    const investmentsSnapshot = await db.collection("investments").get();
+    const investmentsCol = db.collection("investments");
+    const investmentsSnapshot = await investmentsCol.get();
     let totalProfits = 0;
+
     investmentsSnapshot.forEach((doc) => {
       const data = doc.data();
-      if (data.status === "resolved") totalProfits += Number(data.profitEarned || 0);
+      if (data.status === "resolved") {
+        totalProfits += Number(data.profitEarned || 0);
+      }
     });
 
     // 4️⃣ TOTAL EXPENDITURES
-    const expendituresSnapshot = await db.collection("expenditures").get();
+    const expendituresCol = db.collection("expenditures");
+    const expendituresSnapshot = await expendituresCol.get();
     let totalExpenditures = 0;
+
     expendituresSnapshot.forEach((doc) => {
       const data = doc.data();
       totalExpenditures += Number(data.amount || 0);
@@ -54,7 +68,7 @@ export async function GET() {
       ? ((totalFund - lastYearTotal) / lastYearTotal) * 100
       : 0;
 
-    // 7️⃣ Return stats
+    // ✅ Return stats
     return NextResponse.json({
       membersCount,
       totalFund,
