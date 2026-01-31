@@ -1,18 +1,18 @@
 import { getAdminDb } from "@/firebaseAdmin";
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs"; // ✅ REQUIRED for Firebase Admin
+export const runtime = "nodejs";
 
 export async function GET() {
   try {
     const now = new Date();
     const db = getAdminDb();
 
-    // --- 1️⃣ Members count (FAST, no docs loaded) ---
-    const membersCountSnap = await db.collection("members").count().get();
-    const membersCount = membersCountSnap.data().count || 0;
+    // --- 1️⃣ Members count (SAFE) ---
+    const membersSnapshot = await db.collection("members").get();
+    const membersCount = membersSnapshot.size;
 
-    // --- 2️⃣ Savings stats (ONLY required fields) ---
+    // --- 2️⃣ Savings ---
     const savingsSnapshot = await db
       .collection("savings")
       .select("submittedAmount", "createdAt")
@@ -47,7 +47,7 @@ export async function GET() {
       }
     });
 
-    // --- 3️⃣ Total profits (resolved only) ---
+    // --- 3️⃣ Profits ---
     const investmentsSnapshot = await db
       .collection("investments")
       .where("status", "==", "resolved")
@@ -59,7 +59,7 @@ export async function GET() {
       totalProfits += Number(doc.data().profitEarned || 0);
     });
 
-    // --- 4️⃣ Total expenditures (amount only) ---
+    // --- 4️⃣ Expenditures ---
     const expendituresSnapshot = await db
       .collection("expenditures")
       .select("amount")
@@ -70,15 +70,12 @@ export async function GET() {
       totalExpenditures += Number(doc.data().amount || 0);
     });
 
-    // --- 5️⃣ Total fund value ---
+    // --- 5️⃣ Totals ---
     const totalFund = totalSavings + totalProfits - totalExpenditures;
-
-    // --- 6️⃣ Annual growth % ---
     const annualGrowth = lastYearTotal
       ? ((totalFund - lastYearTotal) / lastYearTotal) * 100
       : 0;
 
-    // --- 7️⃣ Return stats ---
     return NextResponse.json({
       membersCount,
       totalFund,
@@ -89,7 +86,7 @@ export async function GET() {
   } catch (error: any) {
     console.error("STATISTICS API ERROR:", error);
     return NextResponse.json(
-      { error: "Unable to fetch statistics" },
+      { error: error.message },
       { status: 500 }
     );
   }
