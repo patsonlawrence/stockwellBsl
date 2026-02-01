@@ -1,13 +1,13 @@
 import "server-only";
 import admin from "firebase-admin";
 
-let app: admin.app.App | null = null;
+let app: admin.app.App;
 
 function getApp() {
-  if (app) return app;
-    try {
-    app = admin.app(); // ✅ get existing app if it exists
-  } catch (error) {
+  if (admin.apps.length) {
+    return admin.apps[0];
+  }
+
   if (
     !process.env.FIREBASE_PROJECT_ID ||
     !process.env.FIREBASE_CLIENT_EMAIL ||
@@ -16,16 +16,17 @@ function getApp() {
     throw new Error("Missing Firebase Admin environment variables");
   }
 
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n");
+
   app = admin.initializeApp({
     credential: admin.credential.cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      privateKey,
     }),
   });
-  }
+
   return app;
-  
 }
 
 export function getAdminAuth() {
