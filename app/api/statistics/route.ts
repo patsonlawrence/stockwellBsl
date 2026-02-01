@@ -1,7 +1,8 @@
+export const runtime = "nodejs";
+
 import { getAdminDb } from "@/firebaseAdmin";
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
 
 export async function GET() {
   try {
