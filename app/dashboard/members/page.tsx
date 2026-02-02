@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, type CSSProperties } from "react";
-import { getAuth, sendPasswordResetEmail, onAuthStateChanged } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   addDoc,
@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 // Define Member type
 // --------------------
 interface Member {
+  id?: string;
   fullName: string;
   email: string;
   phone: string;
@@ -129,16 +130,16 @@ export default function MemberPage() {
   // Fetch all members
   // --------------------
   const fetchMembers = async () => {
-    try {
-      const snapshot = await getDocs(membersCol);
-      const data: Member[] = snapshot.docs.map((doc) => ({
-        ...(doc.data() as Member),
-      }));
-      setMembersList(data);
-    } catch (err: any) {
-      console.error("Error fetching members:", err.message);
-    }
-  };
+  const snapshot = await getDocs(membersCol);
+
+  const data = snapshot.docs.map(docSnap => ({
+    id: docSnap.id,           // ✅ Firestore ID
+    ...(docSnap.data() as Member),
+  }));
+
+  setMembersList(data);
+};
+
 
   useEffect(() => {
     fetchMembers();
@@ -162,60 +163,48 @@ export default function MemberPage() {
     if (Number(member.initialContribution) < 0) newErrors.contribution = "Contribution must be ≥ 0";
     return newErrors;
   };
+  
+// --------------------
+// Submit member (create/update)
+// --------------------
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-  // --------------------
-  // Submit member (create/update)
-  // --------------------
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-    setErrors({});
-
-    try {
-      if (editingId) {
-        // Update existing member
-        const docRef = doc(db, "members", editingId);
-        await updateDoc(docRef, {
-          ...member,
-          updatedAt: serverTimestamp(),
-        });
-        alert("Member updated successfully.");
-      } else {
-  // Check email uniqueness (optional but OK)
-  const emailQuery = query(membersCol, where("email", "==", member.email));
-  const emailSnapshot = await getDocs(emailQuery);
-  if (!emailSnapshot.empty) {
-    setErrors({ email: "Email already exists" });
+  const validationErrors = validate();
+  if (Object.keys(validationErrors).length) {
+    setErrors(validationErrors);
     return;
   }
 
-  // 🔥 CALL YOUR ADMIN API (THIS IS THE KEY)
-  const res = await fetch("/api/create-member", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(member),
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.message || "Failed to create member");
+  if (currentUserRole !== "admin") {
+    alert("You are not authorized to add members.");
+    return;
   }
 
-  // ✅ NOW Firebase can send the email
-  await sendPasswordResetEmail(auth, member.email);
+  try {
+    if (editingId) {
+      const docRef = doc(db, "members", editingId);
+      await updateDoc(docRef, {
+        ...member,
+        updatedAt: serverTimestamp(),
+      });
+      alert("Member updated successfully.");
+    } else {
+      const emailQuery = query(membersCol, where("email", "==", member.email));
+      const emailSnapshot = await getDocs(emailQuery);
 
-  alert("Member added successfully. Password setup email sent.");
-}
+      if (!emailSnapshot.empty) {
+        setErrors({ email: "Email already exists" });
+        return;
+      }
 
-    } catch (err: any) {
-      alert(err.message);
-      return;
+      await addDoc(membersCol, {
+        ...member,
+        authLinked: false,
+        createdAt: serverTimestamp(),
+      });
+
+      alert("Member added. User will register later.");
     }
 
     // Reset form
@@ -242,11 +231,35 @@ export default function MemberPage() {
     });
 
     fetchMembers();
-  };
+  } catch (err: any) {
+    console.error("Error submitting member:", err.message);
+    alert("Error submitting member: " + err.message);
+  }
+};
 
   // --------------------
   // Edit member
   // --------------------
+  onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+
+  const q = query(
+    collection(db, "members"),
+    where("email", "==", user.email),
+    where("authLinked", "==", false)
+  );
+
+  const snap = await getDocs(q);
+
+  if (!snap.empty) {
+    await updateDoc(snap.docs[0].ref, {
+      uid: user.uid,
+      authLinked: true,
+    });
+  }
+});
+
+  
   const handleEdit = async (docId: string) => {
     setEditingId(docId);
     const docRef = doc(db, "members", docId);
@@ -299,7 +312,7 @@ export default function MemberPage() {
   // --------------------
   const handleResetPassword = async (email: string) => {
     try {
-      await sendPasswordResetEmail(auth, email);
+      //await sendPasswordResetEmail(auth, email);
       alert("Password reset email sent.");
     } catch (err: any) {
       alert(err.message);
@@ -310,7 +323,7 @@ export default function MemberPage() {
   // Exit
   // --------------------
   const handleExit = () => {
-    localStorage.removeItem("authToken");
+   // localStorage.removeItem("authToken");
     router.push("/dashboard");
   };
 
@@ -404,17 +417,17 @@ export default function MemberPage() {
   </div>
   {currentUserRole === "admin" && (
     <div style={styles.memberActions}>
-      <button style={styles.editButton} onClick={() => handleEdit(m.membershipId)}>Edit</button>
+      <button style={styles.editButton} onClick={() => handleEdit(m.id!)}>Edit</button>
       <button style={styles.editButton} onClick={() => handleResetPassword(m.email)}>Reset Password</button>
       
     </div>
     
   )}
-  {isSystemAdmin && (
+  {/*isSystemAdmin && (
     <div style={styles.memberActions}>
-      <button style={styles.deleteButton} onClick={() => handleDelete(m.membershipId, m.fullName)}>Delete</button>
+      <button style={styles.deleteButton} onClick={() => handleDelete(m.id!, m.fullName)}>Delete</button>
     </div>
-    )}
+    )*/}
 </div>
 
           ))}
