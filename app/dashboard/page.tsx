@@ -78,7 +78,19 @@ export default function DashboardPage() {
           totalExpenditures += Number(doc.data().amount || 0);
         });
 
-        const totalFund = totalSavings + totalProfits - totalExpenditures;
+        // --- 4️⃣ initialContributionsSum ---
+        const initialContributionsSnapshot = await getDocs(
+          query(collection(db, "members"), where("initialContribution", "!=", null))
+        );
+
+        let totalInitialContributions = 0;
+
+        initialContributionsSnapshot.forEach((doc) => {
+        const initial = Number(doc.get("initialContribution")) || 0;
+        totalInitialContributions += initial;
+  });
+
+        const totalFund = totalSavings + totalProfits - totalExpenditures + totalInitialContributions;
         const annualGrowth = lastYearTotal ? ((totalFund - lastYearTotal) / lastYearTotal) * 100 : 0;
 
         setStats({
@@ -125,7 +137,6 @@ export default function DashboardPage() {
         <RecentInvestments />
         <TopContributors />
       </section>
-
       {/* Navigation */}
       <NavigationSection />
 

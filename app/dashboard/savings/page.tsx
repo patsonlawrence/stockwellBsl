@@ -99,7 +99,7 @@ export default function SavingsPage() {
             if (s.status === "approved" && prevStatus !== "approved") {
               setNotifications(prev => [
                 ...prev,
-                `Your saving of $${s.submittedAmount} on ${s.submittedDate} is approved!`
+                `Your saving of Ush Ush{s.submittedAmount} on Ush {s.submittedDate} is approved!`
               ]);
             }
             previousSavings.current.set(s.id || "", s.status);
@@ -251,7 +251,7 @@ export default function SavingsPage() {
             {s.notes && <p>{s.notes}</p>}
 
             <div style={styles.subText}>
-              Submitted Amount: ${s.submittedAmount} | Submitted Date: {s.submittedDate}
+              Submitted Amount: Ush {s.submittedAmount} | Submitted Date: {s.submittedDate}
             </div>
 
             {isAdmin && s.status === "pending" && (
@@ -288,7 +288,7 @@ export default function SavingsPage() {
 
             {s.status === "approved" && s.approvedAmount !== undefined && (
               <div style={styles.subText}>
-                Approved Amount: ${s.approvedAmount} | Approved Date: {s.approvedDate}
+                Approved Amount: Ush {s.approvedAmount} | Approved Date: {s.approvedDate}
               </div>
             )}
           </div>

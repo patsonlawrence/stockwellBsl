@@ -28,6 +28,10 @@ export async function POST(req: Request) {
       uid: user.uid,
       createdAt: new Date(),
     });
+     // 3️⃣ Generate password setup link
+    const resetLink = await adminAuth.generatePasswordResetLink(
+      member.email
+    );
 
     return NextResponse.json(
       { success: true, uid: user.uid },

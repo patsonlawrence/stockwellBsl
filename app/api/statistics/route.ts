@@ -71,8 +71,21 @@ export async function GET() {
       totalExpenditures += Number(doc.data().amount || 0);
     });
 
+    // --- 4️⃣ initialContributionsSum ---
+    const initialContributionsSnapshot = await db
+  .collection("members")
+  .select("initialContribution")
+  .get();
+
+let totalInitialContributions = 0;
+
+initialContributionsSnapshot.forEach((doc) => {
+  const initial = Number(doc.get("initialContribution")) || 0;
+  totalInitialContributions += initial;
+});
+
     // --- 5️⃣ Totals ---
-    const totalFund = totalSavings + totalProfits - totalExpenditures;
+    const totalFund = totalInitialContributions + totalSavings + totalProfits - totalExpenditures;
     const annualGrowth = lastYearTotal
       ? ((totalFund - lastYearTotal) / lastYearTotal) * 100
       : 0;

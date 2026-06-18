@@ -59,8 +59,7 @@ export default function MemberPage() {
   const auth = getAuth();
 
   // ---- Declare all hooks at the top ----
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  
   const [membersList, setMembersList] = useState<Member[]>([]);
   const [member, setMember] = useState<Member>({
     fullName: "",
@@ -198,12 +197,12 @@ const handleSubmit = async (e: React.FormEvent) => {
         return;
       }
 
-      await addDoc(membersCol, {
+       addDoc(membersCol, {
         ...member,
         authLinked: false,
         createdAt: serverTimestamp(),
       });
-
+await
       alert("Member added. User will register later.");
     }
 
@@ -258,7 +257,6 @@ const handleSubmit = async (e: React.FormEvent) => {
     });
   }
 });
-
   
   const handleEdit = async (docId: string) => {
     setEditingId(docId);
