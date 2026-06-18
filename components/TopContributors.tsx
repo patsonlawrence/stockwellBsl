@@ -49,40 +49,46 @@ export default function TopContributors() {
 
   useEffect(() => {
     const fetchTopContributors = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "savings"));
+  try {
+    // Get members and savings simultaneously
+    const [membersSnapshot, savingsSnapshot] = await Promise.all([
+      getDocs(collection(db, "members")),
+      getDocs(collection(db, "savings")),
+    ]);
 
-        // Aggregate totals per member
-        const totals: Record<string, number> = {};
+    const totals: Record<string, number> = {};
 
-        snapshot.forEach((doc) => {
-  const data = doc.data();
-  const name = data.memberName || "Unknown";
-  const rawAmount = data.submittedAmount;
+    // Start with initial contributions
+    membersSnapshot.forEach((doc) => {
+      const data = doc.data();
+      const fullName = data.fullName;
 
-  // Convert to number safely
-  const amount = Number(rawAmount) || 0;
+      totals[fullName] = Number(data.initialContribution) || 0;
+    });
 
-  if (!totals[name]) {
-    totals[name] = 0;
-  }
-  totals[name] += amount;
-});
+    // Add savings contributions
+    savingsSnapshot.forEach((doc) => {
+      const data = doc.data();
+      const memberName = data.memberName;
+      const amount = Number(data.submittedAmount) || 0;
 
-
-        // Convert to array, sort, pick top 3
-        const topThree = Object.entries(totals)
-          .map(([name, amount]) => ({ name, amount }))
-          .sort((a, b) => b.amount - a.amount)
-          .slice(0, 3);
-
-        setContributors(topThree);
-      } catch (error) {
-        console.error("Error fetching contributors:", error);
-      } finally {
-        setLoading(false);
+      if (!totals[memberName] == undefined) {
+        totals[memberName] = 0;
       }
-    };
+      totals[memberName] += amount;
+    });
+    const topThree = Object.entries(totals)
+      .map(([memberName, amount]) => ({ name: memberName, amount: Number(amount) }))
+      .sort((a, b) => Number(b.amount) - Number(a.amount))
+      .slice(0, 3);
+
+    setContributors(topThree);
+  } catch (error) {
+    console.error("Error fetching contributors:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
     fetchTopContributors();
   }, []);
